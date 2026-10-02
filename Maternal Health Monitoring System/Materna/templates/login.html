@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Materna Login</title>
+
+    <link rel="stylesheet"
+    href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="login-container">
+
+    <!-- LEFT SIDE -->
+
+    <div class="login-left">
+
+        <h1>🤰 Materna</h1>
+
+        <h2>Maternal Health Monitoring System</h2>
+
+        <p class="description">
+
+            AI-powered healthcare platform for pregnant mothers.
+
+        </p>
+
+        <div class="features">
+
+            <p>✔ Live Sensor Monitoring</p>
+
+            <p>✔ AI Risk Prediction</p>
+
+            <p>✔ Doctor Consultation</p>
+
+            <p>✔ Emergency SOS Alert</p>
+
+            <p>✔ GPS Live Tracking</p>
+
+        </div>
+
+    </div>
+
+    <!-- RIGHT SIDE -->
+
+    <div class="login-right">
+
+        <div class="login-card">
+
+            <h2>Welcome Back</h2>
+
+            <p>
+
+                Login to your account
+
+            </p>
+
+            <form action="/login_check" method="POST">
+
+                <input
+                type="text"
+                name="username"
+                placeholder="Username"
+                required>
+
+                <input
+                type="password"
+                name="password"
+                placeholder="Password"
+                required>
+
+                <button type="submit">
+
+                    Login
+
+                </button>
+
+            </form>
+
+            <div class="footer-text">
+
+                Secure Login • Powered by AI
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>

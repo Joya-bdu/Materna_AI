@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Doctor Consultation</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>💬 Doctor Consultation</h1>
+
+    <h2>Patient Information</h2>
+
+    <p><b>Name :</b> {{ patient.full_name }}</p>
+    <p><b>Age :</b> {{ patient.age }}</p>
+    <p><b>Phone :</b> {{ patient.phone }}</p>
+    <p><b>Pregnancy Week :</b> {{ patient.pregnancy_week }}</p>
+
+    <hr>
+
+    <div class="chat-box" id="chatBox">
+
+    </div>
+
+    <form id="doctorChat" class="chat-input">
+
+        <input
+            type="hidden"
+            id="patient"
+            value="{{ patient.username }}">
+
+        <input
+            type="text"
+            id="message"
+            placeholder="Reply to patient..."
+            required>
+
+        <button type="submit">
+
+            Send Reply
+
+        </button>
+
+    </form>
+
+</div>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+<script>
+
+const socket = io();
+socket.emit("join",{
+
+    patient:"{{ patient.username }}",
+
+    doctor:"{{ doctor.username }}"
+
+});
+
+const chatBox = document.getElementById("chatBox");
+
+async function loadMessages(){
+
+    const response = await fetch("/get_messages/{{ patient.username }}");
+
+    const data = await response.json();
+
+    let html = "";
+
+    data.forEach(function(msg){
+
+        if(msg.sender=="doctor"){
+
+            html += `
+            <div class="my-message">
+
+                ${msg.message}
+
+                <div class="time">
+
+                    ${msg.time}
+
+                </div>
+
+                <div class="tick">
+
+                    ${msg.read ? "✓✓ Seen" : "✓ Sent"}
+
+                </div>
+
+            </div>
+            `;
+
+        }
+
+        else{
+
+            html += `
+            <div class="doctor-message">
+
+                ${msg.message}
+
+                <div class="time">
+
+                    ${msg.time}
+
+                </div>
+
+            </div>
+            `;
+
+        }
+
+    });
+
+    chatBox.innerHTML = html;
+
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+}
+
+loadMessages();
+
+
+document.getElementById("doctorChat").addEventListener("submit", async function(e) {
+
+    e.preventDefault();
+
+    const messageInput = document.getElementById("message");
+    const message = messageInput.value.trim();
+
+    if (!message) {
+        return;
+    }
+
+    const response = await fetch("/doctor_send_message", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            patient_username: "{{ patient.username }}",
+            message: message
+        })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+        messageInput.value = "";
+        await loadMessages();
+    } else {
+        alert(data.error || "Message sending failed");
+    }
+
+});
+socket.on("receive_message",function(data){
+
+    if(data.patient=="{{ patient.username }}"){
+
+        loadMessages();
+
+    }
+
+});
+
+
+</script>
+
+</body>
+
+</html>

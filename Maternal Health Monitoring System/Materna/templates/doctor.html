@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <title>Doctor Dashboard</title>
+
+    <link rel="stylesheet"
+    href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="container">
+
+   <div class="header">
+
+    <h1>👨‍⚕ Doctor Dashboard</h1>
+
+    <div>
+
+        <a href="/">
+
+            <button class="manual-btn">
+
+                ⬅ Back
+
+            </button>
+
+        </a>
+
+        <a href="/logout">
+
+            <button class="logout-btn">
+
+                Logout
+
+            </button>
+
+        </a>
+
+    </div>
+
+</div>
+<div class="glass-card">
+
+    <h2>👨‍⚕ Doctor Profile</h2>
+
+    <p><b>Name:</b> {{ doctor.full_name }}</p>
+
+    <p><b>Hospital:</b> {{ doctor.hospital }}</p>
+
+    <p><b>Specialization:</b> {{ doctor.specialization }}</p>
+
+    <p><b>Experience:</b> {{ doctor.experience }}</p>
+    <p><b>Phone:</b> {{ doctor.phone }}</p>
+    <p><b>Qualification:</b> {{ doctor.qualification }}</p>
+
+    <p><b>BMDC:</b> {{ doctor.bmdc }}</p>
+
+</div>
+<div class="card-grid">
+
+    <div class="card">
+
+        <h3>Assigned Patients</h3>
+
+        <p>{{ patients|length }}</p>
+
+    </div>
+
+    <div class="card">
+
+        <h3>Pending Requests</h3>
+
+        <p>{{ requests|length }}</p>
+
+    </div>
+
+</div>
+
+    <div class="glass-card">
+
+        <h2>🩺 Assigned Patients</h2>
+
+        {% for patient in patients %}
+
+           <div class="patient-item">
+
+    <h3>{{ patient.full_name }}</h3>
+
+    <p>Username: {{ patient.username }}</p>
+
+    <p>Age: {{ patient.age }}</p>
+
+    <p>Phone: {{ patient.phone }}</p>
+
+    <p>Blood Group: {{ patient.blood_group }}</p>
+
+    <p>Emergency: {{ patient.emergency_contact }}</p>
+    <p>Address: {{ patient.address }}</p>
+
+<p>Assigned Week: {{ patient.pregnancy_week }}</p>
+<p>Weight : {{ patient.weight }}</p>
+
+<p>Height : {{ patient.height }}</p>
+
+</div>
+
+        {% endfor %}
+
+    </div>
+
+<div class="glass-card">
+
+    <h2>🚑 Consultation Requests</h2>
+
+    {% for req in requests %}
+
+    <div class="patient-item">
+
+        <h3>{{ req.patient }}</h3>
+
+        <p>Status : {{ req.status }}</p>
+        {% if req.unread > 0 %}
+
+<p style="color:red; font-weight:bold;">
+
+🔴 {{ req.unread }} New Message
+
+</p>
+
+{% endif %}
+<a href="/doctor_chat/{{ req.patient }}">
+
+<button class="manual-btn">
+
+💬 Open Chat
+
+</button>
+
+</a>
+
+        
+
+    </div>
+
+    {% endfor %}
+
+</div>
+ 
+
+
+</div>
+    
+<footer>
+
+Materna Health Monitoring System
+
+</footer>
+
+</div>
+
+</body>
+
+</html>

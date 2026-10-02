@@ -1,0 +1,878 @@
+#include <Wire.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
+
+#include <MAX30105.h>
+#include "heartRate.h"
+
+#include <TinyGPS++.h>
+#include <HardwareSerial.h>
+
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+#include <Adafruit_BMP280.h>
+
+
+// =================================================
+// WIFI
+// =================================================
+
+const char* ssid = "Joya";
+const char* password = "Joyasaha08#";
+
+
+// =================================================
+// FLASK SERVER
+// =================================================
+
+// CHANGE THIS IP IF WIFI CHANGES
+String serverName =
+  "http://192.168.43.233:5000/predict_api";
+
+
+// =================================================
+// THINGSPEAK
+// =================================================
+
+String apiKey = "IS239QK32V8086AK";
+
+
+// =================================================
+// MAX30102 / MAX3010x PULSE SENSOR
+// =================================================
+
+MAX30105 particleSensor;
+
+
+// =================================================
+// GPS
+// =================================================
+
+TinyGPSPlus gps;
+
+HardwareSerial GPSSerial(1);
+
+
+// =================================================
+// BLUETOOTH
+// =================================================
+
+HardwareSerial BTserial(2);
+
+
+// =================================================
+// OLED DISPLAY
+// =================================================
+
+// 128 x 64 OLED
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+
+#define OLED_RESET -1
+
+// Common I2C address: 0x3C
+Adafruit_SSD1306 display(
+  SCREEN_WIDTH,
+  SCREEN_HEIGHT,
+  &Wire,
+  OLED_RESET
+);
+
+
+// =================================================
+// BMP280
+// =================================================
+
+Adafruit_BMP280 bmp;
+
+
+// =================================================
+// MPU6050
+// =================================================
+
+const int MPU_ADDR = 0x68;
+
+int16_t ax, ay, az;
+
+
+// =================================================
+// VARIABLES
+// =================================================
+
+float temperature = 0;
+float pressure = 0;
+
+float heartRate = 0;
+float spo2 = 98;
+
+float latitude = 0.0;
+float longitude = 0.0;
+
+int ecgValue = 0;
+
+bool abnormal = false;
+
+long lastBeat = 0;
+
+float beatsPerMinute = 0;
+
+bool fall = false;
+#define BUZZER_PIN 27
+bool bmpOK = false;
+// =================================================
+// OLED MESSAGE FUNCTION
+// =================================================
+
+void showOLEDMessage(String message) {
+
+  display.clearDisplay();
+
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+
+  display.setCursor(0, 0);
+  display.println(message);
+
+  display.display();
+}
+
+
+// =================================================
+// SETUP
+// =================================================
+
+void setup() {
+
+  Serial.begin(115200);
+  pinMode(BUZZER_PIN, OUTPUT);
+digitalWrite(BUZZER_PIN, LOW);
+
+  Serial.println("SYSTEM START");
+
+
+  // =================================================
+  // WIFI
+  // =================================================
+
+  WiFi.begin(ssid, password);
+
+  Serial.print("Connecting WiFi");
+
+  while (WiFi.status() != WL_CONNECTED) {
+
+    delay(500);
+
+    Serial.print(".");
+  }
+
+  Serial.println("\nWiFi Connected");
+
+  Serial.print("ESP32 IP: ");
+
+  Serial.println(WiFi.localIP());
+
+
+  // =================================================
+  // I2C
+  // =================================================
+
+  Wire.begin(18, 19);
+
+  Wire.setClock(400000);
+
+
+  // =================================================
+  // OLED
+  // =================================================
+
+  if (!display.begin(
+        SSD1306_SWITCHCAPVCC,
+        0x3C
+      )) {
+
+    Serial.println("OLED NOT FOUND");
+
+    while (1);
+  }
+
+  display.clearDisplay();
+
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+
+  display.setCursor(0, 0);
+  display.println("System Start");
+
+  display.display();
+
+  Serial.println("OLED OK");
+
+
+  // =================================================
+  // GPS
+  // =================================================
+
+  GPSSerial.begin(9600, SERIAL_8N1, 16, 17);
+
+
+  // =================================================
+  // BLUETOOTH
+  // =================================================
+
+  BTserial.begin(9600, SERIAL_8N1, 26, 25);
+
+  Serial.println("Bluetooth OK");
+
+
+  // =================================================
+  // MPU6050
+  // =================================================
+
+  Wire.beginTransmission(MPU_ADDR);
+
+  Wire.write(0x6B);
+
+  Wire.write(0);
+
+  Wire.endTransmission(true);
+
+  Serial.println("MPU6050 OK");
+
+// =================================================
+// BMP280
+// =================================================
+
+bmpOK = bmp.begin(0x76);
+
+if (!bmpOK) {
+  Serial.println("BMP280 FAIL");
+  showOLEDMessage("BMP ERROR");
+} 
+else {
+  Serial.println("BMP280 OK");
+}
+
+
+  // =================================================
+  // MAX30102 PULSE SENSOR
+  // =================================================
+
+  Serial.println("Initializing MAX30102...");
+
+  if (!particleSensor.begin(Wire, I2C_SPEED_STANDARD)) {
+
+    Serial.println("MAX30102 NOT FOUND");
+
+    showOLEDMessage("PULSE ERROR");
+
+    while (1);
+  }
+
+  Serial.println("MAX30102 FOUND");
+
+
+  // Sensor configuration
+
+  particleSensor.setup(
+    60,     // LED brightness
+    4,      // Sample average
+    2,      // LED mode: Red + IR
+    100,    // Sample rate
+    411,    // Pulse width
+    4096    // ADC range
+  );
+
+  particleSensor.setPulseAmplitudeRed(0x24);
+
+  particleSensor.setPulseAmplitudeIR(0x24);
+
+  Serial.println("MAX30102 READY");
+
+
+  // =================================================
+  // READY
+  // =================================================
+
+  display.clearDisplay();
+
+  display.setTextSize(1);
+
+  display.setCursor(0, 0);
+
+  display.println("SYSTEM READY");
+
+  display.display();
+
+  Serial.println("SYSTEM READY");
+
+  delay(2000);
+}
+
+
+// =================================================
+// LOOP
+// =================================================
+
+void loop() {
+
+
+  // =================================================
+  // MAX30102 HEART RATE
+  // =================================================
+
+  long irValue = particleSensor.getIR();
+
+  Serial.print("IR Value      : ");
+
+  Serial.println(irValue);
+
+
+  if (irValue > 10000) {
+
+    if (checkForBeat(irValue)) {
+
+      long delta = millis() - lastBeat;
+
+      lastBeat = millis();
+
+
+      if (delta > 0) {
+
+        beatsPerMinute = 60.0 / (delta / 1000.0);
+
+
+        if (beatsPerMinute > 40 &&
+            beatsPerMinute < 180) {
+
+          heartRate = beatsPerMinute;
+
+          Serial.print("BEAT DETECTED! HR = ");
+
+          Serial.println(heartRate);
+        }
+      }
+    }
+  }
+
+  else {
+
+    heartRate = 0;
+
+    beatsPerMinute = 0;
+
+    Serial.println("Finger not detected");
+  }
+
+
+  // =================================================
+  // ECG
+  // =================================================
+
+  ecgValue = analogRead(34);
+
+
+  // =================================================
+  // MPU6050
+  // =================================================
+
+  Wire.beginTransmission(MPU_ADDR);
+
+  Wire.write(0x3B);
+
+  Wire.endTransmission(false);
+
+  Wire.requestFrom(MPU_ADDR, 6, true);
+
+  ax = Wire.read() << 8 | Wire.read();
+
+  ay = Wire.read() << 8 | Wire.read();
+
+  az = Wire.read() << 8 | Wire.read();
+
+
+  // =================================================
+  // FALL DETECTION
+  // =================================================
+
+  if (abs(ax) > 25000 ||
+      abs(ay) > 25000 ||
+      abs(az) > 25000) {
+
+    fall = true;
+  }
+
+  else {
+
+    fall = false;
+  }
+
+
+  // =================================================
+  // BMP280
+  // =================================================
+if (bmpOK) {
+  temperature = bmp.readTemperature();
+  pressure = bmp.readPressure() / 100.0F;
+} 
+else {
+  temperature = 0;
+  pressure = 0;
+}
+
+
+  // =================================================
+  // GPS
+  // =================================================
+
+  while (GPSSerial.available()) {
+
+    gps.encode(GPSSerial.read());
+  }
+
+
+  if (gps.location.isValid()) {
+
+    latitude = gps.location.lat();
+
+    longitude = gps.location.lng();
+  }
+
+
+  // =================================================
+  // HEALTH STATUS
+  // =================================================
+
+  abnormal = false;
+
+
+  if (ecgValue < 500 || ecgValue > 3000) {
+
+    abnormal = true;
+  }
+
+
+  if (heartRate > 120 || spo2 < 90) {
+
+    abnormal = true;
+  }
+
+  // EMERGENCY BUZZER
+if (fall || abnormal) {
+  digitalWrite(BUZZER_PIN, HIGH);
+} else {
+  digitalWrite(BUZZER_PIN, LOW);
+}
+
+
+  // =================================================
+  // SERIAL MONITOR
+  // =================================================
+
+  Serial.println();
+
+  Serial.println("============= HEALTH SYSTEM =============");
+
+  Serial.print("ECG Value     : ");
+
+  Serial.println(ecgValue);
+
+  Serial.print("Heart Rate    : ");
+
+  Serial.println(heartRate);
+
+  Serial.print("SpO2          : ");
+
+  Serial.println(spo2);
+
+  Serial.print("Temperature   : ");
+
+  Serial.println(temperature);
+
+  Serial.print("Pressure      : ");
+
+  Serial.println(pressure);
+
+  Serial.print("Accel X       : ");
+
+  Serial.println(ax);
+
+  Serial.print("Accel Y       : ");
+
+  Serial.println(ay);
+
+  Serial.print("Accel Z       : ");
+
+  Serial.println(az);
+
+  Serial.print("Latitude      : ");
+
+  Serial.println(latitude, 6);
+
+  Serial.print("Longitude     : ");
+
+  Serial.println(longitude, 6);
+
+
+  // =================================================
+  // SEND TO FLASK SERVER
+  // =================================================
+
+  if (WiFi.status() == WL_CONNECTED) {
+
+    HTTPClient flaskHttp;
+
+    flaskHttp.begin(serverName);
+
+    flaskHttp.addHeader(
+      "X-API-KEY",
+      "materna_secure_api_2026"
+    );
+
+    flaskHttp.addHeader(
+      "Content-Type",
+      "application/json"
+    );
+
+
+    // =================================================
+    // JSON DATA
+    // =================================================
+
+    String jsonData = "{";
+
+
+    jsonData += "\"age\":25,";
+
+    jsonData += "\"sbp\":120,";
+
+    jsonData += "\"dbp\":80,";
+
+    jsonData += "\"bs\":6,";
+
+
+    jsonData += "\"temp\":";
+
+    jsonData += String(temperature);
+
+    jsonData += ",";
+
+
+    jsonData += "\"hr\":";
+
+    jsonData += String(heartRate);
+
+    jsonData += ",";
+
+
+    jsonData += "\"spo2\":";
+
+    jsonData += String(spo2);
+
+    jsonData += ",";
+
+
+    jsonData += "\"pressure\":";
+
+    jsonData += String(pressure);
+
+    jsonData += ",";
+
+
+    jsonData += "\"ecg\":";
+
+    jsonData += String(ecgValue);
+
+    jsonData += ",";
+
+
+    jsonData += "\"accel_x\":";
+
+    jsonData += String(ax);
+
+    jsonData += ",";
+
+
+    jsonData += "\"accel_y\":";
+
+    jsonData += String(ay);
+
+    jsonData += ",";
+
+
+    jsonData += "\"accel_z\":";
+
+    jsonData += String(az);
+
+    jsonData += ",";
+
+
+    jsonData += "\"latitude\":";
+
+    jsonData += String(latitude, 6);
+
+    jsonData += ",";
+
+
+    jsonData += "\"longitude\":";
+
+    jsonData += String(longitude, 6);
+
+    jsonData += ",";
+
+
+    // =================================================
+    // GOOGLE MAP LINK
+    // =================================================
+
+    String googleMapLink = "";
+
+
+    if (latitude != 0.0 && longitude != 0.0) {
+
+      googleMapLink =
+        "https://www.google.com/maps?q=" +
+        String(latitude, 6) + "," +
+        String(longitude, 6);
+    }
+
+
+    jsonData += "\"google_maps\":\"";
+
+    jsonData += googleMapLink;
+
+    jsonData += "\",";
+
+
+    // =================================================
+    // FALL STATUS
+    // =================================================
+
+    jsonData += "\"fall\":\"";
+
+
+    if (fall) {
+
+      jsonData += "YES";
+    }
+
+    else {
+
+      jsonData += "NO";
+    }
+
+
+    jsonData += "\"";
+
+
+    jsonData += "}";
+
+
+    // =================================================
+    // SEND POST
+    // =================================================
+
+    int flaskResponseCode = flaskHttp.POST(jsonData);
+
+    Serial.print("Flask Response Code: ");
+
+    Serial.println(flaskResponseCode);
+
+
+    // =================================================
+    // ERROR
+    // =================================================
+
+    if (flaskResponseCode <= 0) {
+
+      Serial.println("Flask Server Not Reachable");
+    }
+
+
+    // =================================================
+    // RESPONSE
+    // =================================================
+
+    else {
+
+      String flaskResponse = flaskHttp.getString();
+
+      Serial.println("AI Prediction:");
+
+      Serial.println(flaskResponse);
+    }
+
+
+    flaskHttp.end();
+  }
+
+
+  // =================================================
+  // BLUETOOTH SEND
+  // =================================================
+
+  String btData = "";
+
+
+  btData += "HR:";
+
+  btData += String(heartRate);
+
+
+  btData += " SPO2:";
+
+  btData += String(spo2);
+
+
+  btData += " TEMP:";
+
+  btData += String(temperature);
+
+
+  btData += " ECG:";
+
+  btData += String(ecgValue);
+
+
+  btData += " LAT:";
+
+  btData += String(latitude, 6);
+
+
+  btData += " LNG:";
+
+  btData += String(longitude, 6);
+
+
+  BTserial.println(btData);
+
+
+  // =================================================
+  // THINGSPEAK
+  // =================================================
+
+  if (WiFi.status() == WL_CONNECTED) {
+
+    HTTPClient http;
+
+
+    String url =
+      "http://api.thingspeak.com/update?api_key=" +
+      apiKey;
+
+
+    url += "&field1=" + String(ecgValue);
+
+    url += "&field2=" + String(heartRate);
+
+    url += "&field3=" + String(spo2);
+
+    url += "&field4=" + String(temperature);
+
+    url += "&field5=" + String(pressure);
+
+    url += "&field6=" + String(ax);
+
+    url += "&field7=" + String(ay);
+
+    url += "&field8=" + String(az);
+
+
+    http.begin(url);
+
+    int httpCode = http.GET();
+
+
+    Serial.print("ThingSpeak Response: ");
+
+    Serial.println(httpCode);
+
+
+    http.end();
+  }
+
+
+  // =================================================
+  // OLED DISPLAY
+  // =================================================
+
+  display.clearDisplay();
+
+  display.setTextSize(1);
+
+  display.setTextColor(SSD1306_WHITE);
+
+
+  // First line: Heart Rate and SpO2
+
+  display.setCursor(0, 0);
+
+  display.print("HR:");
+
+  display.print((int)heartRate);
+
+  display.print(" O2:");
+
+  display.print((int)spo2);
+
+
+  // Second line: Temperature
+
+  display.setCursor(0, 16);
+
+  display.print("Temp:");
+
+  display.print(temperature, 1);
+
+  display.print(" C");
+
+
+  // Third line: ECG
+
+  display.setCursor(0, 28);
+
+  display.print("ECG:");
+
+  display.print(ecgValue);
+
+
+  // Fourth line: Fall status
+
+  display.setCursor(0, 40);
+
+  if (fall) {
+
+    display.print("FALL DETECTED");
+  }
+
+  else if (abnormal) {
+
+    display.print("WARNING");
+  }
+
+  else {
+
+    display.print("NORMAL");
+  }
+
+
+  // Fifth line: Pressure
+
+  display.setCursor(0, 52);
+
+  display.print("P:");
+
+  display.print(pressure, 1);
+
+  display.print(" hPa");
+
+
+  display.display();
+
+
+  // =================================================
+  // DELAY
+  // =================================================
+
+  delay(16000);
+}

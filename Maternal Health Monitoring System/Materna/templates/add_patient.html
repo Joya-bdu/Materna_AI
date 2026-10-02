@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Add Patient</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="dashboard-container">
+
+    <div class="topbar">
+
+        <h1>➕ Add Patient</h1>
+
+        <a href="/admin/patients">
+            <button class="manual-btn">
+                ← Back
+            </button>
+        </a>
+
+    </div>
+
+    <div class="patient-section">
+
+        <h2 style="margin-bottom:25px;">
+            Patient Information
+        </h2>
+
+        <form action="/save_patient" method="POST">
+
+            <input
+                type="text"
+                name="full_name"
+                placeholder="Full Name"
+                required>
+
+            <input
+                type="text"
+                name="username"
+                placeholder="Username"
+                required>
+
+            <input
+                type="password"
+                name="password"
+                placeholder="Password"
+                required>
+
+            <input
+                type="number"
+                name="age"
+                placeholder="Age"
+                required>
+
+            <select
+                name="gender"
+                required>
+
+                <option value="Male">Male</option>
+
+                <option value="Female">Female</option>
+
+            </select>
+
+            <input
+                type="text"
+                name="phone"
+                placeholder="Phone Number"
+                required>
+
+            <input
+                type="text"
+                name="blood_group"
+                placeholder="Blood Group"
+                required>
+
+            <input
+                type="text"
+                name="address"
+                placeholder="Address"
+                required>
+
+            <input
+                type="text"
+                name="emergency_contact"
+                placeholder="Emergency Contact"
+                required>
+
+            <input
+                type="number"
+                name="pregnancy_week"
+                placeholder="Pregnancy Week"
+                required>
+
+            <input
+                type="number"
+                name="weight"
+                placeholder="Weight (kg)"
+                required>
+
+            <input
+                type="number"
+                name="height"
+                placeholder="Height (cm)"
+                required>
+
+            <select
+                name="assigned_doctor"
+                required>
+
+                <option value="">
+                    Assign Doctor
+                </option>
+
+                {% for doctor in doctors %}
+
+                <option value="{{ doctor.username }}">
+                    {{ doctor.full_name }}
+                </option>
+
+                {% endfor %}
+
+            </select>
+
+            <button type="submit">
+                💾 Save Patient
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>

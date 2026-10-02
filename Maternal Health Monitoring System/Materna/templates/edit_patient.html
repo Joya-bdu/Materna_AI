@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Edit Patient</title>
+
+    <link rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="dashboard-container">
+
+    <div class="topbar">
+
+        <h1>✏ Edit Patient</h1>
+
+        <a href="/admin/patients">
+
+            <button class="manual-btn">
+
+                ← Back
+
+            </button>
+
+        </a>
+
+    </div>
+
+    <div class="patient-section">
+
+        <h2 style="margin-bottom:25px;">
+
+            Update Patient Information
+
+        </h2>
+
+        <form action="/update_patient" method="POST">
+
+            <input
+                type="hidden"
+                name="username"
+                value="{{ patient.username }}">
+
+            <input
+                type="text"
+                name="full_name"
+                value="{{ patient.full_name }}"
+                placeholder="Full Name"
+                required>
+
+            <input
+                type="number"
+                name="age"
+                value="{{ patient.age }}"
+                placeholder="Age"
+                required>
+
+            <input
+                type="text"
+                name="phone"
+                value="{{ patient.phone }}"
+                placeholder="Phone"
+                required>
+
+            <input
+                type="text"
+                name="blood_group"
+                value="{{ patient.blood_group }}"
+                placeholder="Blood Group"
+                required>
+
+            <input
+                type="number"
+                name="pregnancy_week"
+                value="{{ patient.pregnancy_week }}"
+                placeholder="Pregnancy Week"
+                required>
+
+            <select
+                name="assigned_doctor"
+                required>
+
+                {% for doctor in doctors %}
+
+                <option
+                    value="{{ doctor.username }}"
+                    {% if doctor.username == patient.assigned_doctor %}
+                    selected
+                    {% endif %}>
+
+                    {{ doctor.full_name }}
+
+                </option>
+
+                {% endfor %}
+
+            </select>
+
+            <button type="submit">
+
+                💾 Update Patient
+
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>

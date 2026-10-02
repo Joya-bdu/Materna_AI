@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Patient Management</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🤰 Patient Management</h1>
+
+<div class="top-buttons">
+
+<a href="/admin">
+
+<button class="back-btn">
+
+← Back Dashboard
+
+</button>
+
+</a>
+
+<a href="/add_patient">
+
+<button class="add-btn">
+
+➕ Add Patient
+
+</button>
+
+</a>
+
+</div>
+
+<br>
+
+<input
+type="text"
+id="searchPatient"
+placeholder="Search Patient..."
+onkeyup="searchPatient()">
+
+<br><br>
+
+<table id="patientTable">
+
+<thead>
+
+<tr>
+
+<th>Name</th>
+
+<th>Username</th>
+
+<th>Age</th>
+
+<th>Phone</th>
+
+<th>Blood Group</th>
+
+<th>Pregnancy Week</th>
+
+<th>Assigned Doctor</th>
+
+<th>Action</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for patient in patients %}
+
+<tr>
+
+<td>{{ patient.full_name }}</td>
+
+<td>{{ patient.username }}</td>
+
+<td>{{ patient.age }}</td>
+
+<td>{{ patient.phone }}</td>
+
+<td>{{ patient.blood_group }}</td>
+
+<td>{{ patient.pregnancy_week }}</td>
+
+<td>{{ patient.assigned_doctor }}</td>
+
+<td>
+
+<a href="/edit_patient/{{ patient.username }}">
+
+<button class="edit-btn">
+
+Edit
+
+</button>
+
+</a>
+
+<a href="/delete_patient/{{ patient.username }}"
+onclick="return confirm('Delete this patient?')">
+
+<button class="delete-btn">
+
+Delete
+
+</button>
+
+</a>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+<script>
+
+function searchPatient(){
+
+let input=document.getElementById("searchPatient").value.toLowerCase();
+
+let rows=document.querySelectorAll("#patientTable tbody tr");
+
+rows.forEach(function(row){
+
+let text=row.innerText.toLowerCase();
+
+row.style.display=text.includes(input)?"":"none";
+
+});
+
+}
+
+</script>
+
+</body>
+
+</html>

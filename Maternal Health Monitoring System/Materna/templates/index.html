@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Materna AI Dashboard</title>
+
+    <!-- GOOGLE FONT -->
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet">
+
+    <!-- CSS FILE -->
+
+    <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='style.css') }}"
+    >
+
+    <!-- CHART JS -->
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- ========================================= -->
+    <!-- HEADER -->
+    <!-- ========================================= -->
+
+    <div class="header">
+
+        <h1>🏥 Materna AI Dashboard</h1>
+
+        <button class="manual-btn"
+                id="openPopup">
+
+            Manual Prediction
+
+        </button>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- CARD GRID -->
+    <!-- ========================================= -->
+
+    <div class="card-grid">
+
+        <!-- HEART RATE -->
+
+        <div class="glass-card">
+
+            <h2>❤️ Heart Rate</h2>
+
+            <div class="value red">
+
+                {{ hr }} BPM
+
+            </div>
+
+            <div class="status">
+
+                Live Pulse Monitoring
+
+            </div>
+
+            <div class="chart-box">
+
+                <canvas id="hrChart"></canvas>
+
+            </div>
+
+        </div>
+
+        <!-- SPO2 -->
+
+        <div class="glass-card">
+
+            <h2>🩸 SpO2</h2>
+
+            <div class="value blue">
+
+                {{ spo2 }} %
+
+            </div>
+
+            <div class="status">
+
+                Oxygen Saturation Level
+
+            </div>
+
+            <div class="chart-box">
+
+                <canvas id="spo2Chart"></canvas>
+
+            </div>
+
+        </div>
+
+        <!-- TEMPERATURE -->
+
+        <div class="glass-card">
+
+            <h2>🌡 Temperature</h2>
+
+            <div class="value green">
+
+                {{ temp }} °C
+
+            </div>
+
+            <div class="status">
+
+                Body Temperature
+
+            </div>
+
+            <div class="chart-box">
+
+                <canvas id="tempChart"></canvas>
+
+            </div>
+
+        </div>
+
+        <!-- ECG -->
+
+        <div class="glass-card">
+
+            <h2>❤️ ECG Analysis</h2>
+
+            <div class="value yellow">
+
+                {{ ecg_prediction }}
+
+            </div>
+
+            <div class="status">
+
+                ECG Monitoring Status
+
+            </div>
+
+            <br>
+
+            <div class="status">
+
+                ECG Value:
+                {{ ecg }}
+
+            </div>
+
+        </div>
+
+        <!-- FALL -->
+
+        <div class="glass-card">
+
+            <h2>🚨 Fall Detection</h2>
+
+            <div class="value red">
+
+                {{ fall_status }}
+
+            </div>
+
+            <div class="status">
+
+                Motion Monitoring System
+
+            </div>
+
+            <br>
+
+            <div class="status">
+
+                Live Fall Monitoring Active
+
+            </div>
+
+        </div>
+
+        <!-- GPS -->
+
+        <div class="glass-card">
+
+            <h2>📍 GPS Status</h2>
+
+            <div class="value blue">
+
+                {{ gps_status }}
+
+            </div>
+
+            <div class="status">
+
+                Real-Time Tracking
+
+            </div>
+
+            <br>
+
+            <div class="status">
+
+                Latitude:
+                {{ latitude }}
+
+            </div>
+
+            <div class="status">
+
+                Longitude:
+                {{ longitude }}
+
+            </div>
+
+            <a
+            href="https://maps.google.com/?q={{ latitude }},{{ longitude }}"
+            target="_blank"
+            class="map-link">
+
+                Open Live Location
+
+            </a>
+
+        </div>
+
+        <!-- PRESSURE -->
+
+        <div class="glass-card">
+
+            <h2>🌤 Pressure</h2>
+
+            <div class="value green">
+
+                {{ pressure }} hPa
+
+            </div>
+
+            <div class="status">
+
+                Air Pressure Monitoring
+
+            </div>
+
+        </div>
+
+        <!-- AI RESULT -->
+
+        <div class="glass-card">
+
+            <h2>🤖 AI Risk Prediction</h2>
+
+            <div class="value yellow">
+
+                {{ prediction_text }}
+
+            </div>
+
+            <div class="status">
+
+                Maternal Health Risk Analysis
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ========================================= -->
+<!-- POPUP -->
+<!-- ========================================= -->
+
+<div class="popup"
+     id="popup">
+
+    <div class="popup-content">
+
+        <span class="close-btn"
+              id="closePopup">
+
+            &times;
+
+        </span>
+
+        <h2>Manual Prediction</h2>
+
+        <form action="/predict"
+              method="post">
+
+            <input type="text"
+                   name="age"
+                   placeholder="Age"
+                   required>
+
+            <input type="text"
+                   name="sbp"
+                   placeholder="Systolic BP"
+                   required>
+
+            <input type="text"
+                   name="dbp"
+                   placeholder="Diastolic BP"
+                   required>
+
+            <input type="text"
+                   name="bs"
+                   placeholder="Blood Sugar"
+                   required>
+
+            <input type="text"
+                   name="temp"
+                   placeholder="Temperature"
+                   required>
+
+            <input type="text"
+                   name="hr"
+                   placeholder="Heart Rate"
+                   required>
+
+            <button type="submit">
+
+                Predict Risk
+
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+<!-- ========================================= -->
+<!-- JAVASCRIPT -->
+<!-- ========================================= -->
+
+<script>
+
+    // =========================================
+    // POPUP
+    // =========================================
+
+    const popup =
+    document.getElementById('popup');
+
+    const openBtn =
+    document.getElementById('openPopup');
+
+    const closeBtn =
+    document.getElementById('closePopup');
+
+    openBtn.onclick = () => {
+
+        popup.style.display = "flex";
+    }
+
+    closeBtn.onclick = () => {
+
+        popup.style.display = "none";
+    }
+
+    window.onclick = (e) => {
+
+        if(e.target == popup){
+
+            popup.style.display = "none";
+        }
+    }
+
+    // =========================================
+    // HEART RATE CHART
+    // =========================================
+
+    new Chart(
+
+        document.getElementById('hrChart'),
+
+        {
+
+            type:'line',
+
+            data:{
+
+                labels:['Live'],
+
+                datasets:[{
+
+                    data:[{{ hr }}],
+
+                    borderColor:'#ef4444',
+
+                    backgroundColor:
+                    'rgba(239,68,68,0.2)',
+
+                    fill:true,
+
+                    tension:0.4,
+
+                    borderWidth:3,
+
+                    pointRadius:4
+                }]
+            },
+
+            options:{
+
+                responsive:true,
+
+                maintainAspectRatio:false,
+
+                plugins:{
+
+                    legend:{
+                        display:false
+                    }
+                },
+
+                scales:{
+
+                    x:{
+                        display:false
+                    },
+
+                    y:{
+                        display:false
+                    }
+                }
+            }
+        }
+    );
+
+    // =========================================
+    // SPO2 CHART
+    // =========================================
+
+    new Chart(
+
+        document.getElementById('spo2Chart'),
+
+        {
+
+            type:'doughnut',
+
+            data:{
+
+                datasets:[{
+
+                    data:[
+                        {{ spo2 }},
+                        100 - {{ spo2 }}
+                    ],
+
+                    backgroundColor:[
+                        '#38bdf8',
+                        '#1e293b'
+                    ],
+
+                    borderWidth:0
+                }]
+            },
+
+            options:{
+
+                responsive:true,
+
+                maintainAspectRatio:false,
+
+                cutout:'75%',
+
+                plugins:{
+
+                    legend:{
+                        display:false
+                    }
+                }
+            }
+        }
+    );
+
+    // =========================================
+    // TEMPERATURE CHART
+    // =========================================
+
+    new Chart(
+
+        document.getElementById('tempChart'),
+
+        {
+
+            type:'bar',
+
+            data:{
+
+                labels:['Temp'],
+
+                datasets:[{
+
+                    data:[{{ temp }}],
+
+                    backgroundColor:'#22c55e',
+
+                    borderRadius:14,
+
+                    maxBarThickness:45
+                }]
+            },
+
+            options:{
+
+                responsive:true,
+
+                maintainAspectRatio:false,
+
+                plugins:{
+
+                    legend:{
+                        display:false
+                    }
+                },
+
+                scales:{
+
+                    x:{
+                        display:false
+                    },
+
+                    y:{
+                        display:false
+                    }
+                }
+            }
+        }
+    );
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Consultation</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>💬 Consultation</h1>
+
+    <h2>Doctor Information</h2>
+
+    <p><b>Name:</b> {{ doctor.full_name }}</p>
+
+    <p><b>Hospital:</b> {{ doctor.hospital }}</p>
+
+    <p><b>Specialization:</b> {{ doctor.specialization }}</p>
+
+    <p><b>Qualification:</b> {{ doctor.qualification }}</p>
+
+    <p><b>BMDC:</b> {{ doctor.bmdc }}</p>
+
+    <p><b>Experience:</b> {{ doctor.experience }}</p>
+
+    <p><b>Phone:</b> {{ doctor.phone }}</p>
+
+    <hr>
+
+    <h2>💬 Chat</h2>
+
+    <div class="chat-box">
+
+        <!-- JavaScript এখানে message load করবে -->
+
+    </div>
+
+    <form id="chatForm" class="chat-input">
+
+        <input
+type="text"
+id="message"
+name="message"
+placeholder="Type Message"
+required>
+
+        <button type="submit">
+
+            Send
+
+        </button>
+
+    </form>
+
+</div>
+
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+<script>
+
+const socket = io();
+
+socket.emit("join",{
+
+    patient:"{{ patient.username }}",
+
+    doctor:"{{ doctor.username }}"
+
+});
+
+async function loadMessages(){
+
+    const response = await fetch("/get_messages/{{ patient.username }}");
+
+    const data = await response.json();
+
+    let html = "";
+
+    data.forEach(function(msg){
+
+        if(msg.sender=="patient"){
+
+            html += `
+
+            <div class="my-message">
+
+                ${msg.message}
+
+                <div class="time">
+
+                    ${msg.time}
+
+                </div>
+
+                <div class="tick">
+
+                    ${msg.read ? "✓✓ Seen" : "✓ Sent"}
+
+                </div>
+
+            </div>
+
+            `;
+
+        }
+
+        else{
+
+            html += `
+
+            <div class="doctor-message">
+
+                ${msg.message}
+
+                <div class="time">
+
+                    ${msg.time}
+
+                </div>
+
+                <div class="tick">
+
+                    ${msg.read ? "✓✓ Seen" : "✓ Sent"}
+
+                </div>
+
+            </div>
+
+            `;
+
+        }
+
+    });
+
+    document.querySelector(".chat-box").innerHTML = html;
+
+    let chat = document.querySelector(".chat-box");
+
+    chat.scrollTop = chat.scrollHeight;
+
+}
+
+
+
+loadMessages();
+socket.on("receive_message",function(data){
+
+    if(data.patient=="{{ patient.username }}"){
+
+        loadMessages();
+
+        socket.emit("seen",{
+
+            patient:"{{ patient.username }}",
+
+            doctor:"{{ doctor.username }}",
+
+            sender:"doctor"
+
+        });
+
+    }
+
+});
+socket.on("typing",function(){
+
+    console.log("Doctor is typing...");
+
+});
+
+document.getElementById("chatForm").onsubmit = async function(e) {
+
+    e.preventDefault();
+
+    let input = document.getElementById("message");
+    let message = input.value.trim();
+
+    if (message === "") {
+        return;
+    }
+
+    let formData = new FormData();
+    formData.append("message", message);
+
+    try {
+
+        const response = await fetch("/send_message", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+
+            input.value = "";
+            await loadMessages();
+
+        } else {
+
+            alert(data.error || "Message sending failed");
+
+        }
+
+    } catch (error) {
+
+        console.error("Send message error:", error);
+        alert("Server connection error");
+
+    }
+
+};
+
+</script>
+
+
+</body>
+
+</html>

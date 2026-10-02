@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Edit Doctor</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="dashboard-container">
+
+    <div class="topbar">
+
+        <h1>✏ Edit Doctor</h1>
+
+        <a href="/admin/doctors">
+
+            <button class="manual-btn">
+
+                ← Back
+
+            </button>
+
+        </a>
+
+    </div>
+
+    <div class="patient-section">
+
+        <h2 style="margin-bottom:25px;">
+
+            Update Doctor Information
+
+        </h2>
+
+        <form action="/update_doctor" method="POST">
+
+            <!-- Username (Hidden) -->
+
+            <input
+                type="hidden"
+                name="username"
+                value="{{ doctor.username }}">
+
+            <!-- Full Name -->
+
+            <input
+                type="text"
+                name="full_name"
+                value="{{ doctor.full_name }}"
+                placeholder="Full Name"
+                required>
+
+            <!-- Phone -->
+
+            <input
+                type="text"
+                name="phone"
+                value="{{ doctor.phone }}"
+                placeholder="Phone"
+                required>
+
+            <!-- Hospital -->
+
+            <input
+                type="text"
+                name="hospital"
+                value="{{ doctor.hospital }}"
+                placeholder="Hospital"
+                required>
+
+            <!-- Specialization -->
+
+            <input
+                type="text"
+                name="specialization"
+                value="{{ doctor.specialization }}"
+                placeholder="Specialization"
+                required>
+
+            <!-- Qualification -->
+
+            <input
+                type="text"
+                name="qualification"
+                value="{{ doctor.qualification }}"
+                placeholder="Qualification"
+                required>
+
+            <!-- BMDC -->
+
+            <input
+                type="text"
+                name="bmdc"
+                value="{{ doctor.bmdc }}"
+                placeholder="BMDC Number"
+                required>
+
+            <!-- Experience -->
+
+            <input
+                type="text"
+                name="experience"
+                value="{{ doctor.experience }}"
+                placeholder="Experience"
+                required>
+
+            <button type="submit">
+
+                💾 Update Doctor
+
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+</html>

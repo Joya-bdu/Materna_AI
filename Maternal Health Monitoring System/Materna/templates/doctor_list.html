@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Doctors</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🩺 Doctor Management</h1>
+
+<div class="top-buttons">
+
+<a href="/admin">
+
+<button class="back-btn">
+
+← Back Dashboard
+
+</button>
+
+</a>
+
+<a href="/add_doctor">
+
+<button class="add-btn">
+
+＋ Add Doctor
+
+</button>
+
+</a>
+
+</div>
+
+<br>
+
+
+
+<input
+type="text"
+id="searchDoctor"
+placeholder="Search Doctor..."
+onkeyup="searchDoctor()">
+
+<br><br>
+
+<table id="doctorTable">
+
+<thead>
+
+<tr>
+
+<th>Name</th>
+
+<th>Username</th>
+
+<th>Phone</th>
+
+<th>Specialization</th>
+
+<th>Hospital</th>
+
+<th>Experience</th>
+
+<th>Qualification</th>
+
+<th>BMDC</th>
+
+<th>Action</th>
+
+</tr>
+
+</thead>
+
+
+
+{% for doctor in doctors %}
+
+<tr>
+
+<td>{{ doctor.full_name }}</td>
+
+<td>{{ doctor.username }}</td>
+
+<td>{{ doctor.phone }}</td>
+
+<td>{{ doctor.specialization }}</td>
+
+<td>{{ doctor.hospital }}</td>
+
+<td>{{ doctor.experience }}</td>
+
+<td>{{ doctor.qualification }}</td>
+
+<td>{{ doctor.bmdc }}</td>
+
+<td>
+
+<a href="/edit_doctor/{{ doctor.username }}">
+    <button class="edit-btn">
+        Edit
+    </button>
+</a>
+
+<a href="/delete_doctor/{{ doctor.username }}"
+   onclick="return confirm('Delete this doctor?')">
+
+    <button class="delete-btn">
+        Delete
+    </button>
+
+</a>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+<script>
+
+function searchDoctor(){
+
+let input=document.getElementById("searchDoctor").value.toLowerCase();
+
+let table=document.getElementById("doctorTable");
+
+let tr=table.getElementsByTagName("tr");
+
+for(let i=0;i<tr.length;i++){
+
+let text=tr[i].innerText.toLowerCase();
+
+if(text.indexOf(input)>-1)
+
+tr[i].style.display="";
+
+else
+
+tr[i].style.display="none";
+
+}
+
+}
+
+</script>
+
+</body>
+
+</html>

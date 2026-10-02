@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+    content="width=device-width, initial-scale=1.0">
+
+    <meta http-equiv="Cache-Control"
+    content="no-cache, no-store, must-revalidate">
+
+    <meta http-equiv="Pragma"
+    content="no-cache">
+
+    <meta http-equiv="Expires"
+    content="0">
+
+    <title>Materna Patient Dashboard</title>
+
+    <link rel="stylesheet"
+    href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- ===================================== -->
+    <!-- HEADER -->
+    <!-- ===================================== -->
+
+    <div class="header">
+
+        <h1>🤰 Materna Patient Dashboard</h1>
+
+        <div style="display:flex; gap:10px;">
+
+            <!-- BACK BUTTON -->
+
+            <button onclick="history.back()"
+            class="back-btn">
+
+                ⬅ Back
+
+            </button>
+
+            <!-- LOGOUT -->
+
+            <a href="/logout">
+
+                <button class="manual-btn">
+
+                    Logout
+
+                </button>
+
+            </a>
+
+        </div>
+
+    </div>
+
+    <!-- ===================================== -->
+    <!-- PATIENT PROFILE -->
+    <!-- ===================================== -->
+
+    <div class="manual-card">
+
+<h2>🧑 Patient Information</h2>
+
+<p><b>👤 Full Name :</b> {{ patient_name }}</p>
+
+<p><b>🎂 Age :</b> {{ patient_age }}</p>
+
+<p><b>⚧ Gender :</b> {{ patient_gender }}</p>
+
+<p><b>🩸 Blood Group :</b> {{ patient_blood }}</p>
+
+<p><b>📞 Phone :</b> {{ patient_phone }}</p>
+
+<p><b>🚨 Emergency Contact :</b> {{ emergency_contact }}</p>
+
+<p><b>🏠 Address :</b> {{ patient_address }}</p>
+
+<p><b>🤰 Pregnancy Week :</b> {{ pregnancy_week }}</p>
+
+<p><b>⚖ Weight :</b> {{ patient_weight }} kg</p>
+
+<p><b>📏 Height :</b> {{ patient_height }} cm</p>
+
+</div>
+
+    <!-- ===================================== -->
+    <!-- MANUAL HEALTH INPUT -->
+    <!-- ===================================== -->
+
+    <div class="manual-card">
+
+        <h2>🩺 Manual Health Input</h2>
+
+        <form action="/predict"
+        method="POST">
+
+            <input type="number"
+            name="age"
+            placeholder="Age"
+            required>
+
+            <input type="number"
+            name="sbp"
+            placeholder="Systolic BP"
+            required>
+
+            <input type="number"
+            name="dbp"
+            placeholder="Diastolic BP"
+            required>
+
+            <input type="number"
+            step="0.1"
+            name="temp"
+            placeholder="Temperature"
+            required>
+
+            <input type="number"
+            name="hr"
+            placeholder="Heart Rate"
+            required>
+
+            <input type="number"
+            step="0.1"
+            name="bs"
+            placeholder="Blood Sugar"
+            required>
+
+            <button type="submit">
+
+                Predict Risk
+
+            </button>
+
+        </form>
+
+    </div>
+
+    <!-- ===================================== -->
+<!-- FALL DETECTION -->
+<!-- ===================================== -->
+
+<div class="manual-card">
+
+    <h2>🚨 Fall Detection</h2>
+
+    <p>
+        Click the button below to start Webcam based Fall Detection.
+    </p>
+
+    <div style="margin-top:20px;">
+
+        <b>Status :</b>
+
+        <span id="fallStatus"
+        style="color:#00ff99;font-size:20px;font-weight:bold;">
+
+            {{ fall_status }}
+
+        </span>
+
+    </div>
+
+    <br>
+
+    <form action="/start_fall">
+
+        <button
+        type="submit"
+        class="manual-btn">
+
+            ▶ Start Fall Detection
+
+        </button>
+
+    </form>
+
+    <br>
+
+    <form action="/stop_fall">
+
+        <button
+        type="submit"
+        class="stop-btn">
+
+            ■ Stop Detection
+
+        </button>
+
+    </form>
+
+</div>
+    <!-- ===================================== -->
+<!-- MANUAL PREDICTION RESULT -->
+<!-- ===================================== -->
+
+<div class="manual-card">
+
+    <h2>🩺 Manual Prediction Result</h2>
+
+    <table>
+
+        <tr>
+            <th>Parameter</th>
+            <th>Value</th>
+        </tr>
+
+        <tr>
+            <td>Prediction</td>
+            <td>{{ manual_prediction if manual_prediction else "-" }}</td>
+        </tr>
+
+        <tr>
+    <td>Systolic BP</td>
+    <td>{{ manual_sbp if manual_sbp else "-" }}</td>
+</tr>
+
+<tr>
+    <td>Diastolic BP</td>
+    <td>{{ manual_dbp if manual_dbp else "-" }}</td>
+</tr>
+
+<tr>
+    <td>Temperature</td>
+    <td>{{ manual_temp if manual_temp else "-" }} °C</td>
+</tr>
+
+<tr>
+    <td>Heart Rate</td>
+    <td>{{ manual_hr if manual_hr else "-" }} BPM</td>
+</tr>
+
+<tr>
+    <td>Blood Sugar</td>
+    <td>{{ manual_bs if manual_bs else "-" }}</td>
+</tr>
+
+    </table>
+
+</div>
+
+    <!-- ===================================== -->
+    <!-- LIVE SENSOR DASHBOARD -->
+    <!-- ===================================== -->
+
+    <div class="card-grid">
+
+        <!-- HEART RATE -->
+
+        <div class="glass-card">
+
+            <h2>❤️ Heart Rate</h2>
+
+            <div class="value red" id="heartRate">
+    0 BPM
+</div>
+
+            <div class="status">
+
+                Live Pulse Monitoring
+
+            </div>
+
+        </div>
+
+        <!-- SPO2 -->
+
+<div class="glass-card">
+
+    <h2>🩸 SpO₂</h2>
+
+    <div class="value blue" id="spo2">
+
+        0 %
+
+    </div>
+
+    <div class="status">
+
+        Live Oxygen Saturation
+
+    </div>
+
+</div>
+
+        <!-- TEMPERATURE -->
+
+        <div class="glass-card">
+
+            <h2>🌡 Temperature</h2>
+
+    <div class="value yellow" id="temp">
+    0 °C
+</div>
+
+            <div class="status">
+
+                Body Temperature
+
+            </div>
+
+        </div>
+
+        <!-- ECG -->
+
+        <div class="glass-card">
+
+            <h2>🫀 ECG Analysis</h2>
+
+            <div class="value yellow"
+            id="ecg">
+
+                Waiting...
+
+            </div>
+
+            <div class="status">
+
+                ECG Monitoring
+
+            </div>
+
+        </div>
+
+        <!-- AI RISK -->
+
+        <div class="glass-card">
+
+            <h2>🤖 AI Risk</h2>
+
+            <div class="value green" id="risk">
+    Waiting...
+</div>
+
+            <div class="status">
+
+                Maternal AI Prediction
+
+            </div>
+
+        </div>
+
+        <!-- GPS -->
+
+        <div class="glass-card">
+
+            <h2>📍 GPS Status</h2>
+
+            <div class="value blue"
+            id="gpsStatus">
+
+                {{ gps_status }}
+
+            </div>
+
+            <div class="status">
+
+                Real-Time Tracking
+
+            </div>
+
+            <a class="map-link"
+            id="mapLink"
+            target="_blank"
+            href="https://maps.google.com/?q={{ latitude }},{{ longitude }}">
+
+                Open Map
+
+            </a>
+
+        </div>
+
+        <!-- SENSOR FALL DETECTION -->
+
+<div class="glass-card">
+
+    <h2>🚨 Fall Detection</h2>
+
+    <div class="value red" id="fallStatus">
+
+        {{ fall_status }}
+
+    </div>
+
+    <div class="status">
+
+        MPU6500 Motion Monitoring
+
+    </div>
+
+</div>
+        <!-- DOCTOR -->
+
+        <div class="glass-card">
+
+            <h2>👨‍⚕ Assigned Doctor</h2>
+
+            <div class="value blue">
+
+                Dr. {{ doctor_name }}
+
+            </div>
+
+            <div class="status">
+
+                {{ doctor_specialization }}
+
+            </div>
+
+            <div class="status">
+
+                🏥 {{ doctor_hospital }}
+
+            </div>
+
+            <form action="/consult_doctor"
+            method="POST">
+
+                <button class="manual-btn">
+
+                    🚑 Consult Doctor
+
+                </button>
+
+            </form>
+
+        </div>
+
+        <!-- PRESSURE -->
+
+        <div class="glass-card">
+
+            <h2>☁ Pressure</h2>
+
+            <div class="value yellow"
+            id="pressure">
+
+                {{ pressure }} hPa
+
+            </div>
+
+            <div class="status">
+
+                Air Pressure Monitoring
+
+            </div>
+
+        </div>
+        
+
+
+    </div>
+
+</div>
+
+
+</div>
+<form action="/emergency" method="POST">
+
+    <button class="manual-btn">
+
+        🚨 Emergency SOS
+
+    </button>
+
+</form>
+
+<!-- ===================================== -->
+<!-- LIVE DATA SCRIPT -->
+<!-- ===================================== -->
+
+<script>
+
+async function loadLiveData(){
+
+    try{
+
+        const response = await fetch("/live_data");
+
+        const data = await response.json();
+
+        document.getElementById("heartRate").innerHTML =
+            data.heart_rate + " BPM";
+
+        document.getElementById("spo2").innerHTML =
+            data.spo2 + " %";
+
+        document.getElementById("temp").innerHTML =
+            data.temperature + " °C";
+
+        document.getElementById("ecg").innerHTML =
+            data.ecg_prediction;
+
+        document.getElementById("risk").innerHTML =
+            data.prediction;
+
+        document.getElementById("pressure").innerHTML =
+            data.pressure + " hPa";
+
+        document.getElementById("fallStatus").innerHTML =
+            data.fall_status;
+
+        document.getElementById("gpsStatus").innerHTML =
+            data.gps_status;
+
+        document.getElementById("mapLink").href =
+            "https://maps.google.com/?q=" +
+            data.latitude + "," +
+            data.longitude;
+
+    }
+
+    catch(error){
+
+        console.log(error);
+
+    }
+
+}
+
+setInterval(loadLiveData, 2000);
+
+loadLiveData();
+
+
+</script>
+
+<footer>
+
+Materna Health Monitoring System
+
+</footer>
+
+
+</body>
+</html>

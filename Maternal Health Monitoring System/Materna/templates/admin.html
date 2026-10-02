@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+    content="width=device-width, initial-scale=1.0">
+
+    <title>Admin Dashboard</title>
+
+    <link rel="stylesheet"
+    href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="dashboard-container">
+
+    <!-- ========================= -->
+    <!-- TOPBAR -->
+    <!-- ========================= -->
+
+    <div class="topbar">
+
+        <h1>🩺 Admin Dashboard</h1>
+
+        <div class="topbar-right">
+
+    <a href="/">
+        <button class="top-btn">
+            ⬅ Back
+        </button>
+    </a>
+
+    <a href="/admin/doctors">
+        <button class="top-btn">
+            👨‍⚕ Doctors List
+        </button>
+    </a>
+
+    <a href="/admin/patients">
+    <button class="manual-btn">
+        🤰 Patients List
+    </button>
+</a>
+
+    <a href="/logout">
+        <button class="logout-btn">
+            Logout
+        </button>
+    </a>
+
+</div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- STATS -->
+    <!-- ========================= -->
+
+    <div class="card-grid">
+        <div class="card">
+
+    <h2>Total Predictions</h2>
+
+    <p>{{ total_predictions }}</p>
+
+</div>
+
+<div class="card">
+
+    <h2>Total Consultations</h2>
+
+    <p>{{ total_consultations }}</p>
+
+</div>
+
+        <div class="card">
+
+            <h2>Total Users</h2>
+
+            <p>
+
+                {{ users|length }}
+
+            </p>
+
+        </div>
+
+        <div class="card">
+
+            <h2>Doctors</h2>
+
+            <p>
+
+                {{ users|selectattr("role","equalto","doctor")|list|length }}
+
+            </p>
+
+        </div>
+
+        <div class="card">
+
+            <h2>Patients</h2>
+
+            <p>
+
+                {{ users|selectattr("role","equalto","patient")|list|length }}
+
+            </p>
+
+        </div>
+        
+
+    </div>
+
+
+            
+
+<div class="patient-section">
+
+<h2>Prediction Summary</h2>
+
+<table>
+
+<thead>
+
+<tr>
+<th>Patient</th>
+<th>Prediction</th>
+<th>Risk</th>
+<th>Date</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for p in predictions %}
+
+<tr>
+
+<td>{{ p.patient }}</td>
+
+<td>{{ p.get("prediction","AI Prediction") }}</td>
+
+<td>{{ p.risk }}</td>
+
+<td>{{ p.get("date","-") }}</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+      
+  <div class="patient-section">
+
+<h2>Consultation Summary</h2>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>Doctor</th>
+
+<th>Patient</th>
+
+<th>Status</th>
+
+<th>Next Visit</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for c in consultations %}
+
+<tr>
+
+<td>{{ c.doctor }}</td>
+
+<td>{{ c.patient }}</td>
+
+<td>{{ c.status }}</td>
+
+<td>{{ c.get("next_visit","-") }}</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>  
+
+
+</div>
+
+<!-- ========================= -->
+<!-- JAVASCRIPT -->
+<!-- ========================= -->
+
+<script>
+
+function toggleDoctorDropdown(){
+
+    let role =
+        document.getElementById("roleSelect").value;
+
+    let doctorDiv =
+        document.getElementById("doctorDiv");
+
+    let doctorSelect =
+        document.getElementById("doctorSelect");
+
+    let patientFields =
+        document.getElementById("patientFields");
+
+    let doctorFields =
+        document.getElementById("doctorFields");
+
+    if(role === "patient"){
+
+        doctorDiv.style.display = "block";
+
+        patientFields.style.display = "block";
+
+        doctorFields.style.display = "none";
+
+        doctorSelect.required = true;
+
+    }
+
+    else if(role === "doctor"){
+
+        doctorDiv.style.display = "none";
+
+        patientFields.style.display = "none";
+
+        doctorFields.style.display = "block";
+
+        doctorSelect.required = false;
+
+    }
+
+}
+
+toggleDoctorDropdown();
+
+</script>
+
+</body>
+
+</html>
